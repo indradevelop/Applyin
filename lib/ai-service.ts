@@ -3,7 +3,7 @@
 import { useState } from "react"
 
 // Google AI API key
-const API_KEY = "AIzaSyAOiP4ReuZWROeFGVgfuRiCbTC4mrPpnIU"
+const API_KEY = ""
 
 interface GenerateSummaryParams {
   name: string
