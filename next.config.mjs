@@ -13,6 +13,7 @@ try {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  serverExternalPackages: ["puppeteer-core", "@sparticuz/chromium"],
   eslint: {
     ignoreDuringBuilds: true,
   },

@@ -11,7 +11,7 @@ export default function FAQPage() {
       <section className="pt-32 pb-16 md:pt-40 md:pb-24">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h1 className="font-bb-casual text-4xl md:text-5xl mb-6">
+            <h1 className="font-reb-casual text-4xl md:text-5xl mb-6">
               <BlurText text="Pertanyaan yang" delay={100} />
               <BlurText text=" Sering" className="text-primary" delay={300} />
               <BlurText text=" Ditanyakan" delay={500} />

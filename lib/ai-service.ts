@@ -3,7 +3,7 @@
 import { useState } from "react"
 
 // Google AI API key
-const API_KEY = ""
+const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY
 
 interface GenerateSummaryParams {
   name: string
@@ -67,22 +67,53 @@ export function useAiService() {
         Please write a concise, professional summary (3-5 sentences) that highlights the person's experience, skills, and career goals. The summary should be ATS-friendly and impactful. Write in first person.
       `
 
+      console.log("Generated Prompt:", prompt)
+
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt.trim(),
+                },
+              ],
+            },
+          ],
+        }),
+      })
+
+      if (!response.ok) {
+        const errorMessage = "Failed to generate summary from Google AI"
+        setError(errorMessage)
+        throw new Error(errorMessage)
+      }
+
+      const result = await response.json()
+      const summary =
+        result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
+        "Summary could not be generated."
+
       // For demonstration purposes, we'll simulate an API call
       // In a real implementation, you would make an actual API call to Google's AI services
 
       // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      // await new Promise((resolve) => setTimeout(resolve, 2000))
 
       // Sample response based on typical professional summaries
-      const sampleResponses = [
-        `Profesional ${data.position} berpengalaman dengan keahlian dalam ${data.skills.hard.split(",").slice(0, 3).join(", ")}. Memiliki track record yang kuat dalam ${data.experience[0]?.position || "posisi senior"} di ${data.experience[0]?.company || "perusahaan terkemuka"}, dengan fokus pada peningkatan efisiensi dan inovasi. Menggabungkan kemampuan teknis dengan ${data.skills.soft.split(",").slice(0, 2).join(" dan ")}, saya siap berkontribusi untuk mencapai tujuan organisasi dan mendorong pertumbuhan bisnis.`,
-        `${data.position} yang berdedikasi dengan lebih dari ${data.experience.length} tahun pengalaman di industri. Memiliki latar belakang pendidikan ${data.education[0]?.degree || "yang kuat"} dari ${data.education[0]?.institution || "institusi terkemuka"} dan keahlian dalam ${data.skills.hard.split(",").slice(0, 3).join(", ")}. Terbukti sukses dalam ${data.experience[0]?.description?.split(".")[0] || "meningkatkan performa tim"} dan memiliki kemampuan ${data.skills.soft.split(",").slice(0, 2).join(" dan ")}. Mencari kesempatan untuk mengaplikasikan keahlian saya dalam lingkungan yang dinamis dan inovatif.`,
-        `Profesional ${data.position} yang berpengalaman dengan fokus pada ${data.skills.hard.split(",")[0] || "teknologi terkini"}. Lulusan ${data.education[0]?.institution || "universitas terkemuka"} dengan pengalaman di ${data.experience[0]?.company || "perusahaan terkemuka"} selama ${data.experience[0]?.period?.split("-")[1] ? "beberapa tahun" : "periode yang signifikan"}. Memiliki keahlian dalam ${data.skills.hard.split(",").slice(0, 3).join(", ")} dan dikenal karena ${data.skills.soft.split(",").slice(0, 2).join(" dan ")}. Berkomitmen untuk terus belajar dan berkembang dalam karir profesional.`,
-      ]
+      // const sampleResponses = [
+      //   `Profesional ${data.position} berpengalaman dengan keahlian dalam ${data.skills.hard.split(",").slice(0, 3).join(", ")}. Memiliki track record yang kuat dalam ${data.experience[0]?.position || "posisi senior"} di ${data.experience[0]?.company || "perusahaan terkemuka"}, dengan fokus pada peningkatan efisiensi dan inovasi. Menggabungkan kemampuan teknis dengan ${data.skills.soft.split(",").slice(0, 2).join(" dan ")}, saya siap berkontribusi untuk mencapai tujuan organisasi dan mendorong pertumbuhan bisnis.`,
+      //   `${data.position} yang berdedikasi dengan lebih dari ${data.experience.length} tahun pengalaman di industri. Memiliki latar belakang pendidikan ${data.education[0]?.degree || "yang kuat"} dari ${data.education[0]?.institution || "institusi terkemuka"} dan keahlian dalam ${data.skills.hard.split(",").slice(0, 3).join(", ")}. Terbukti sukses dalam ${data.experience[0]?.description?.split(".")[0] || "meningkatkan performa tim"} dan memiliki kemampuan ${data.skills.soft.split(",").slice(0, 2).join(" dan ")}. Mencari kesempatan untuk mengaplikasikan keahlian saya dalam lingkungan yang dinamis dan inovatif.`,
+      //   `Profesional ${data.position} yang berpengalaman dengan fokus pada ${data.skills.hard.split(",")[0] || "teknologi terkini"}. Lulusan ${data.education[0]?.institution || "universitas terkemuka"} dengan pengalaman di ${data.experience[0]?.company || "perusahaan terkemuka"} selama ${data.experience[0]?.period?.split("-")[1] ? "beberapa tahun" : "periode yang signifikan"}. Memiliki keahlian dalam ${data.skills.hard.split(",").slice(0, 3).join(", ")} dan dikenal karena ${data.skills.soft.split(",").slice(0, 2).join(" dan ")}. Berkomitmen untuk terus belajar dan berkembang dalam karir profesional.`,
+      // ]
 
       // Select a random response
-      const randomIndex = Math.floor(Math.random() * sampleResponses.length)
-      const summary = sampleResponses[randomIndex]
+      // const randomIndex = Math.floor(Math.random() * sampleResponses.length)
+      // const summary = sampleResponses[randomIndex]
 
       setLoading(false)
       return summary

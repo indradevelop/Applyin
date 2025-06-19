@@ -10,17 +10,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { PlusCircle, Trash2, Brain, Eye, Download, Save, Loader2 } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import { useAiService } from "@/lib/ai-service"
 import { useRouter } from "next/navigation"
 import { generatePDF } from "@/lib/pdf-generator"
 import { MagneticButton } from "@/components/animations/magnetic-button"
 import { ScrollReveal } from "@/components/animations/scroll-reveal"
 import { FloatingElements } from "@/components/animations/floating-elements"
+import { Editor } from "@/components/editor";
+import { HandleDownload } from "@/lib/handle-download"
+import { profile } from "console"
 
 export function CVForm() {
   const router = useRouter()
-  const { toast } = useToast()
   const { generateSummary, loading: aiLoading } = useAiService()
 
   const [activeTab, setActiveTab] = useState("personal")
@@ -176,18 +178,15 @@ export function CVForm() {
 
       setFormData((prev) => ({
         ...prev,
-        summary,
+        summary: summary,
       }))
 
-      toast({
-        title: "Ringkasan berhasil dibuat",
+      toast.success("Ringkasan berhasil dibuat", {
         description: "Ringkasan profesional telah dibuat dengan AI",
       })
     } catch (error) {
-      toast({
-        title: "Gagal membuat ringkasan",
+      toast.error("Gagal membuat ringkasan", {
         description: "Terjadi kesalahan saat membuat ringkasan. Silakan coba lagi.",
-        variant: "destructive",
       })
     }
   }
@@ -201,8 +200,7 @@ export function CVForm() {
       localStorage.setItem("cv-draft", JSON.stringify(formData))
 
       setSaving(false)
-      toast({
-        title: "Draft tersimpan",
+      toast("Draft tersimpan", {
         description: "CV Anda telah berhasil disimpan sebagai draft",
       })
     }, 1500)
@@ -210,8 +208,34 @@ export function CVForm() {
 
   const handlePreview = () => {
     // Save current form data to localStorage before navigating
+    localStorage.setItem("cv-draft", JSON.stringify(formData))
     localStorage.setItem("cv-preview-data", JSON.stringify(formData))
     router.push("/preview-cv")
+  }
+
+  const handleDownload = async () => {
+    localStorage.setItem("cv-draft", JSON.stringify(formData))
+    localStorage.setItem("cv-preview-data", JSON.stringify(formData))
+    const loading = toast.loading("CV Dalam Proses", {
+      description: "CV Anda dalam proses pembuatan. Mohon tunggu sebentar.",
+    })
+
+    // setTimeout(() => {
+    //   toast.dismiss(loading)
+    // }, 2000)
+    // console.log("handleDownload formData:", JSON.stringify(formData))
+    const status = await HandleDownload({ profileData: JSON.stringify(formData), language: "id", template: "modern" })
+    if (status) {
+      toast.dismiss(loading)
+      toast.success("CV berhasil diunduh", {
+        description: "CV Anda telah berhasil diunduh sebagai PDF.",
+      })
+    } else {
+      toast.dismiss(loading)
+      toast.error("Gagal mengunduh CV", {
+        description: "Terjadi kesalahan saat mengunduh CV. Silakan coba lagi.",
+      })
+    }
   }
 
   const handleDownloadPDF = async () => {
@@ -249,8 +273,8 @@ export function CVForm() {
         <div style="margin-bottom: 20px;">
           <h2 style="font-size: 18px; margin-bottom: 12px; color: #4361ee;">Pengalaman Kerja</h2>
           ${formData.experiences
-            .map(
-              (exp) => `
+        .map(
+          (exp) => `
             <div style="margin-bottom: 16px;">
               <div style="display: flex; justify-content: space-between;">
                 <div>
@@ -262,15 +286,15 @@ export function CVForm() {
               <p style="font-size: 14px; white-space: pre-line; margin-top: 8px;">${exp.description || "Description"}</p>
             </div>
           `,
-            )
-            .join("")}
+        )
+        .join("")}
         </div>
         
         <div style="margin-bottom: 20px;">
           <h2 style="font-size: 18px; margin-bottom: 12px; color: #4361ee;">Pendidikan</h2>
           ${formData.education
-            .map(
-              (edu) => `
+        .map(
+          (edu) => `
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
               <div>
                 <h3 style="font-size: 16px; margin: 0;">${edu.degree || "Degree"}</h3>
@@ -279,8 +303,8 @@ export function CVForm() {
               <div style="font-size: 14px; color: #666;">${edu.year || "Year"}</div>
             </div>
           `,
-            )
-            .join("")}
+        )
+        .join("")}
         </div>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
@@ -300,10 +324,8 @@ export function CVForm() {
       await generatePDF("temp-cv-content", `cv-${formData.personal.name || "user"}.pdf`)
     } catch (error) {
       console.error("Error generating PDF:", error)
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to generate PDF. Please try again.",
-        variant: "destructive",
       })
     } finally {
       // Clean up
@@ -412,13 +434,21 @@ export function CVForm() {
                   </Label>
                 </div>
               </div>
-              <Textarea
+              <Editor
+                id="summary"
+                defaultValue={formData.summary}
+                onChange={(value) => {
+                  console.log("Editor value changed:", value)
+                  setFormData((prev) => ({ ...prev, summary: value }))
+                }}
+              />
+              {/* <Textarea
                 id="summary"
                 placeholder="Tuliskan ringkasan profesional Anda dalam 3-5 kalimat yang menggambarkan pengalaman, keahlian, dan tujuan karier Anda."
                 rows={6}
                 value={formData.summary}
                 onChange={(e) => setFormData((prev) => ({ ...prev, summary: e.target.value }))}
-              />
+              /> */}
               {useAI && (
                 <Card className="bg-primary/5 border-primary/20">
                   <CardContent className="p-4">
@@ -519,13 +549,21 @@ export function CVForm() {
                   </div>
                   <div className="space-y-3 md:col-span-2">
                     <Label htmlFor={`description-${exp.id}`}>Deskripsi Tugas</Label>
-                    <Textarea
+                    <Editor
+                      id={`description-${exp.id}`}
+                      defaultValue={exp.description}
+                      onChange={(value) => {
+                        console.log("description value changed:", value)
+                        handleExperienceChange(exp.id, "description", value)
+                      }}
+                    />
+                    {/* <Textarea
                       id={`description-${exp.id}`}
                       placeholder="Jelaskan tanggung jawab dan pencapaian Anda di posisi ini. Gunakan kata kerja aktif dan sertakan hasil yang terukur."
                       rows={4}
                       value={exp.description}
                       onChange={(e) => handleExperienceChange(exp.id, "description", e.target.value)}
-                    />
+                    /> */}
                   </div>
                 </div>
               </motion.div>
@@ -622,7 +660,17 @@ export function CVForm() {
           <ScrollReveal>
             <div className="space-y-3">
               <Label htmlFor="hard-skills">Hard Skills</Label>
-              <Textarea
+              <Editor
+                id="hard-skills"
+                defaultValue={formData.skills.hard}
+                onChange={(value) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    skills: { ...prev.skills, hard: value },
+                  }))
+                }}
+              />
+              {/* <Textarea
                 id="hard-skills"
                 placeholder="Masukkan keterampilan teknis Anda, dipisahkan dengan koma. Contoh: Java, Python, SQL, Adobe Photoshop, Microsoft Excel"
                 rows={3}
@@ -633,13 +681,23 @@ export function CVForm() {
                     skills: { ...prev.skills, hard: e.target.value },
                   }))
                 }
-              />
+              /> */}
             </div>
           </ScrollReveal>
           <ScrollReveal delay={0.1}>
             <div className="space-y-3">
               <Label htmlFor="soft-skills">Soft Skills</Label>
-              <Textarea
+              <Editor
+                id="soft-skills"
+                defaultValue={formData.skills.soft}
+                onChange={(value) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    skills: { ...prev.skills, soft: value },
+                  }))
+                }}
+              />
+              {/* <Textarea
                 id="soft-skills"
                 placeholder="Masukkan keterampilan non-teknis Anda, dipisahkan dengan koma. Contoh: Komunikasi, Kepemimpinan, Manajemen Waktu, Pemecahan Masalah"
                 rows={3}
@@ -650,7 +708,7 @@ export function CVForm() {
                     skills: { ...prev.skills, soft: e.target.value },
                   }))
                 }
-              />
+              /> */}
             </div>
           </ScrollReveal>
         </TabsContent>
@@ -674,13 +732,20 @@ export function CVForm() {
           <ScrollReveal>
             <div className="space-y-3">
               <Label htmlFor="certificates">Sertifikat / Pelatihan</Label>
-              <Textarea
+              <Editor
+                id="certificates"
+                defaultValue={formData.certificates}
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, certificates: value }))
+                }}
+              />
+              {/* <Textarea
                 id="certificates"
                 placeholder="Masukkan sertifikat atau pelatihan yang Anda miliki. Format: Nama Sertifikat - Penyelenggara (Tahun). Contoh: AWS Certified Solutions Architect - Amazon Web Services (2022)"
                 rows={5}
                 value={formData.certificates}
                 onChange={(e) => setFormData((prev) => ({ ...prev, certificates: e.target.value }))}
-              />
+              /> */}
             </div>
           </ScrollReveal>
         </TabsContent>
@@ -689,13 +754,20 @@ export function CVForm() {
           <ScrollReveal>
             <div className="space-y-3">
               <Label htmlFor="projects">Proyek / Portofolio</Label>
-              <Textarea
+              <Editor
+                id="projects"
+                defaultValue={formData.projects}
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, projects: value }))
+                }}
+              />
+              {/* <Textarea
                 id="projects"
                 placeholder="Masukkan proyek atau portofolio yang relevan. Format: Nama Proyek - Deskripsi Singkat - Link (opsional). Contoh: E-commerce Website - Mengembangkan website e-commerce menggunakan React dan Node.js - github.com/username/project"
                 rows={5}
                 value={formData.projects}
                 onChange={(e) => setFormData((prev) => ({ ...prev, projects: e.target.value }))}
-              />
+              /> */}
             </div>
           </ScrollReveal>
         </TabsContent>
@@ -711,7 +783,7 @@ export function CVForm() {
             <Button
               variant="outline"
               className="w-full rounded-full"
-              onClick={handleDownloadPDF}
+              onClick={handleDownload}
               disabled={downloading}
             >
               {downloading ? (

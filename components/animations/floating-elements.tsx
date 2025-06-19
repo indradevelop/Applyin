@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 
 interface FloatingElementsProps {
   count?: number
@@ -20,14 +21,20 @@ export function FloatingElements({
 }: FloatingElementsProps) {
   const { theme } = useTheme()
   const isDark = theme === "dark"
+  const [randomValue, setRandomValue] = useState<number>(1)
+
+  useEffect(() => {
+    setRandomValue(Math.random())
+  }, [])
+  
 
   const elements = Array.from({ length: count }).map((_, i) => {
-    const randomX = Math.random() * 100
-    const randomY = Math.random() * 100
-    const randomSize = Math.random() * size + size / 2
-    const randomDuration = (Math.random() * 10 + 10) / speed
-    const randomDelay = Math.random() * 5
-    const randomOpacity = Math.random() * 0.3 + 0.1
+    const randomX = randomValue * 100
+    const randomY = randomValue * 100
+    const randomSize = randomValue * size + size / 2
+    const randomDuration = (randomValue * 10 + 10) / speed
+    const randomDelay = randomValue * 5
+    const randomOpacity = randomValue * 0.3 + 0.1
 
     return (
       <motion.div
@@ -43,7 +50,7 @@ export function FloatingElements({
         }}
         animate={{
           y: [0, -30, 0],
-          x: [0, Math.random() > 0.5 ? 15 : -15, 0],
+          x: [0, randomValue > 0.5 ? 15 : -15, 0],
         }}
         transition={{
           duration: randomDuration,

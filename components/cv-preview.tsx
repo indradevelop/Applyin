@@ -4,13 +4,16 @@ import { useState, useEffect } from "react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Phone, Mail, MapPin, Linkedin, Globe, Calendar, Building, Download, ArrowLeft, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import Link from "next/link"
 import { generatePDF } from "@/lib/pdf-generator"
 import { motion } from "framer-motion"
+import { CVModern } from "@/components/cv-modern"
+import { CVClassic } from "@/components/cv-classic"
+import { CVMinimal } from "@/components/cv-minimal"
+import { HandleDownload } from "@/lib/handle-download"
 
 export function CVPreview() {
-  const { toast } = useToast()
   const [template, setTemplate] = useState("modern")
   const [language, setLanguage] = useState("id")
   const [cvData, setCvData] = useState<any>(null)
@@ -36,14 +39,35 @@ export function CVPreview() {
   }, [])
 
   const handleDownload = async () => {
-    try {
-      await generatePDF("cv-content", `cv-${cvData.personal.name || "user"}.pdf`)
-    } catch (error) {
-      console.error("Error downloading PDF:", error)
-      toast({
-        title: "Error",
-        description: "Failed to download PDF. Please try again.",
-        variant: "destructive",
+    // try {
+    //   await generatePDF("cv-content", `cv-${cvData.personal.name || "user"}.pdf`)
+    // } catch (error) {
+    //   console.error("Error downloading PDF:", error)
+    //   toast({
+    //     title: "Error",
+    //     description: "Failed to download PDF. Please try again.",
+    //     variant: "destructive",
+    //   })
+    // }
+
+    const loading = toast.loading("CV Dalam Proses", {
+      description: "CV Anda dalam proses pembuatan. Mohon tunggu sebentar.",
+    })
+
+    // setTimeout(() => {
+    //   toast.dismiss(loading)
+    // }, 2000)
+    // console.log("handleDownload formData:", JSON.stringify(formData))
+    const status = await HandleDownload({ profileData: JSON.stringify(cvData), language: language, template: template })
+    if (status) {
+      toast.dismiss(loading)
+      toast.success("CV berhasil diunduh", {
+        description: "CV Anda telah berhasil diunduh sebagai PDF.",
+      })
+    } else {
+      toast.dismiss(loading)
+      toast.error("Gagal mengunduh CV", {
+        description: "Terjadi kesalahan saat mengunduh CV. Silakan coba lagi.",
       })
     }
   }
@@ -56,16 +80,13 @@ export function CVPreview() {
     navigator.clipboard
       .writeText(dummyShareableLink)
       .then(() => {
-        toast({
-          title: "Link Copied",
+        toast.success("Link Copied", {
           description: "A shareable link to your CV has been copied to clipboard.",
         })
       })
       .catch(() => {
-        toast({
-          title: "Failed to Copy",
+        toast.error("Failed to Copy", {
           description: "Could not copy the link to clipboard.",
-          variant: "destructive",
         })
       })
   }
@@ -131,322 +152,19 @@ export function CVPreview() {
           <div className="cv-paper-preview">
             <div className="cv-paper" id="cv-content">
               {template === "modern" && (
-                <div className="flex flex-col space-y-6">
-                  {/* Header */}
-                  <div className="border-b pb-6">
-                    <h1 className="text-3xl font-bold mb-2">{cvData.personal.name || "John Doe"}</h1>
-                    <p className="text-gray-600 mb-4">
-                      {cvData.experiences[0]?.position || "Senior Software Engineer"}
-                    </p>
-
-                    <div className="flex flex-wrap gap-4 text-sm">
-                      <div className="flex items-center">
-                        <Phone className="h-4 w-4 mr-2 text-primary" />
-                        <span>{cvData.personal.phone || "+62 812 3456 7890"}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Mail className="h-4 w-4 mr-2 text-primary" />
-                        <span>{cvData.personal.email || "john.doe@example.com"}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-2 text-primary" />
-                        <span>{cvData.personal.address || "Jakarta, Indonesia"}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Linkedin className="h-4 w-4 mr-2 text-primary" />
-                        <span>{cvData.personal.linkedin || "linkedin.com/in/johndoe"}</span>
-                      </div>
-                      {cvData.personal.website && (
-                        <div className="flex items-center">
-                          <Globe className="h-4 w-4 mr-2 text-primary" />
-                          <span>{cvData.personal.website}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Summary */}
-                  <div>
-                    <h2 className="text-lg font-bold mb-2 text-primary">
-                      {language === "id" ? "Ringkasan Profesional" : "Professional Summary"}
-                    </h2>
-                    <p>
-                      {cvData.summary ||
-                        "Profesional IT berpengalaman 5+ tahun dengan keahlian dalam pengembangan web dan mobile. Memiliki track record dalam memimpin tim dan mengembangkan solusi teknologi yang inovatif untuk meningkatkan efisiensi bisnis dan pengalaman pengguna."}
-                    </p>
-                  </div>
-
-                  {/* Experience */}
-                  <div>
-                    <h2 className="text-lg font-bold mb-3 text-primary">
-                      {language === "id" ? "Pengalaman Kerja" : "Work Experience"}
-                    </h2>
-
-                    <div className="space-y-4">
-                      {(cvData.experiences || []).map((exp: any, index: number) => (
-                        <div key={index}>
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-bold">{exp.position || "Software Engineer"}</h3>
-                              <div className="flex items-center text-sm text-gray-600">
-                                <Building className="h-3 w-3 mr-1" />
-                                <span>
-                                  {exp.company || "PT Tech Solutions"}, {exp.location || "Jakarta"}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex items-center text-sm text-gray-600">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              <span>{`${exp.startDate || "Jan 2020"} - ${exp.endDate || "Present"}`}</span>
-                            </div>
-                          </div>
-                          <p className="mt-2 whitespace-pre-line text-sm">
-                            {exp.description ||
-                              "• Mengembangkan dan memelihara aplikasi web menggunakan React, Node.js, dan MongoDB\n• Memimpin tim 5 developer dalam proyek e-commerce\n• Meningkatkan performa aplikasi sebesar 40% melalui optimasi kode dan database"}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Education */}
-                  <div>
-                    <h2 className="text-lg font-bold mb-3 text-primary">
-                      {language === "id" ? "Pendidikan" : "Education"}
-                    </h2>
-
-                    <div className="space-y-2">
-                      {(cvData.education || []).map((edu: any, index: number) => (
-                        <div key={index} className="flex justify-between">
-                          <div>
-                            <h3 className="font-bold">{edu.degree || "S1 Teknik Informatika"}</h3>
-                            <p className="text-sm text-gray-600">{edu.institution || "Universitas Indonesia"}</p>
-                            {edu.achievements && <p className="text-sm text-gray-600 mt-1">{edu.achievements}</p>}
-                          </div>
-                          <div className="text-sm text-gray-600">{edu.year || "2018"}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Skills */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h2 className="text-lg font-bold mb-2 text-primary">
-                        {language === "id" ? "Hard Skills" : "Hard Skills"}
-                      </h2>
-                      <p>{cvData.skills?.hard || "JavaScript, React, Node.js, Python, SQL, Git, Docker, AWS"}</p>
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold mb-2 text-primary">
-                        {language === "id" ? "Soft Skills" : "Soft Skills"}
-                      </h2>
-                      <p>{cvData.skills?.soft || "Kepemimpinan, Komunikasi, Manajemen Waktu, Problem Solving"}</p>
-                    </div>
-                  </div>
-
-                  {/* Languages */}
-                  {(cvData.languages || "").length > 0 && (
-                    <div>
-                      <h2 className="text-lg font-bold mb-2 text-primary">
-                        {language === "id" ? "Bahasa" : "Languages"}
-                      </h2>
-                      <p>{cvData.languages || "Bahasa Indonesia (Native), English (Professional)"}</p>
-                    </div>
-                  )}
-
-                  {/* Certificates */}
-                  {(cvData.certificates || "").length > 0 && (
-                    <div>
-                      <h2 className="text-lg font-bold mb-2 text-primary">
-                        {language === "id" ? "Sertifikat" : "Certificates"}
-                      </h2>
-                      <p>
-                        {cvData.certificates ||
-                          "AWS Certified Solutions Architect (2022), Google Professional Cloud Developer (2021)"}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Projects */}
-                  {(cvData.projects || "").length > 0 && (
-                    <div>
-                      <h2 className="text-lg font-bold mb-2 text-primary">
-                        {language === "id" ? "Proyek" : "Projects"}
-                      </h2>
-                      <p>
-                        {cvData.projects ||
-                          "E-commerce Platform - Mengembangkan platform e-commerce full-stack dengan fitur pembayaran dan analitik"}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                cvData && (
+                  <CVModern cvData={cvData} language={language} />
+                )
               )}
 
               {template === "classic" && (
-                <div className="flex flex-col space-y-6">
-                  {/* Header - Classic Style */}
-                  <div className="text-center border-b pb-6">
-                    <h1 className="text-3xl font-bold uppercase mb-2">{cvData.personal.name || "John Doe"}</h1>
-                    <p className="text-gray-600 mb-4">
-                      {cvData.experiences[0]?.position || "Senior Software Engineer"}
-                    </p>
-
-                    <div className="flex flex-wrap justify-center gap-4 text-sm">
-                      <div className="flex items-center">
-                        <Phone className="h-4 w-4 mr-2 text-gray-600" />
-                        <span>{cvData.personal.phone || "+62 812 3456 7890"}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Mail className="h-4 w-4 mr-2 text-gray-600" />
-                        <span>{cvData.personal.email || "john.doe@example.com"}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-2 text-gray-600" />
-                        <span>{cvData.personal.address || "Jakarta, Indonesia"}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Rest of the sections with classic styling */}
-                  <div>
-                    <h2 className="text-lg font-bold uppercase mb-2 border-b">
-                      {language === "id" ? "Ringkasan Profesional" : "Professional Summary"}
-                    </h2>
-                    <p>
-                      {cvData.summary ||
-                        "Profesional IT berpengalaman 5+ tahun dengan keahlian dalam pengembangan web dan mobile. Memiliki track record dalam memimpin tim dan mengembangkan solusi teknologi yang inovatif untuk meningkatkan efisiensi bisnis dan pengalaman pengguna."}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h2 className="text-lg font-bold uppercase mb-3 border-b">
-                      {language === "id" ? "Pengalaman Kerja" : "Work Experience"}
-                    </h2>
-
-                    <div className="space-y-4">
-                      {(cvData.experiences || []).map((exp: any, index: number) => (
-                        <div key={index}>
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-bold">{exp.position || "Software Engineer"}</h3>
-                              <div className="flex items-center text-sm text-gray-600">
-                                <span>
-                                  {exp.company || "PT Tech Solutions"}, {exp.location || "Jakarta"}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              <span>{`${exp.startDate || "Jan 2020"} - ${exp.endDate || "Present"}`}</span>
-                            </div>
-                          </div>
-                          <p className="mt-2 whitespace-pre-line text-sm">
-                            {exp.description ||
-                              "• Mengembangkan dan memelihara aplikasi web menggunakan React, Node.js, dan MongoDB\n• Memimpin tim 5 developer dalam proyek e-commerce\n• Meningkatkan performa aplikasi sebesar 40% melalui optimasi kode dan database"}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Other sections follow the same pattern */}
-                  <div>
-                    <h2 className="text-lg font-bold uppercase mb-3 border-b">
-                      {language === "id" ? "Pendidikan" : "Education"}
-                    </h2>
-                    <div className="space-y-2">
-                      {(cvData.education || []).map((edu: any, index: number) => (
-                        <div key={index} className="flex justify-between">
-                          <div>
-                            <h3 className="font-bold">{edu.degree || "S1 Teknik Informatika"}</h3>
-                            <p className="text-sm text-gray-600">{edu.institution || "Universitas Indonesia"}</p>
-                          </div>
-                          <div className="text-sm text-gray-600">{edu.year || "2018"}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                cvData && (<CVClassic cvData={cvData} language={language} />)
               )}
 
               {template === "minimal" && (
-                <div className="flex flex-col space-y-6">
-                  {/* Minimal template content */}
-                  <div>
-                    <h1 className="text-2xl font-bold mb-1">{cvData.personal.name || "John Doe"}</h1>
-                    <p className="text-gray-600 text-sm mb-4">
-                      {cvData.experiences[0]?.position || "Senior Software Engineer"}
-                    </p>
-
-                    <div className="flex flex-wrap gap-3 text-xs">
-                      <span>{cvData.personal.email || "john.doe@example.com"}</span>
-                      <span>•</span>
-                      <span>{cvData.personal.phone || "+62 812 3456 7890"}</span>
-                      <span>•</span>
-                      <span>{cvData.personal.address || "Jakarta, Indonesia"}</span>
-                    </div>
-                  </div>
-
-                  <div className="border-t pt-4">
-                    <p className="text-sm">
-                      {cvData.summary ||
-                        "Profesional IT berpengalaman 5+ tahun dengan keahlian dalam pengembangan web dan mobile. Memiliki track record dalam memimpin tim dan mengembangkan solusi teknologi yang inovatif untuk meningkatkan efisiensi bisnis dan pengalaman pengguna."}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-2">
-                      {language === "id" ? "Pengalaman" : "Experience"}
-                    </h2>
-                    <div className="space-y-3">
-                      {(cvData.experiences || []).map((exp: any, index: number) => (
-                        <div key={index}>
-                          <div className="flex justify-between items-baseline">
-                            <h3 className="font-medium">{exp.position || "Software Engineer"}</h3>
-                            <span className="text-xs text-gray-500">{`${exp.startDate || "Jan 2020"} - ${exp.endDate || "Present"}`}</span>
-                          </div>
-                          <p className="text-xs text-gray-600">{exp.company || "PT Tech Solutions"}</p>
-                          <p className="mt-1 text-xs whitespace-pre-line">
-                            {exp.description ||
-                              "• Mengembangkan dan memelihara aplikasi web menggunakan React, Node.js, dan MongoDB\n• Memimpin tim 5 developer dalam proyek e-commerce\n• Meningkatkan performa aplikasi sebesar 40% melalui optimasi kode dan database"}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-2">
-                      {language === "id" ? "Pendidikan" : "Education"}
-                    </h2>
-                    <div className="space-y-2">
-                      {(cvData.education || []).map((edu: any, index: number) => (
-                        <div key={index} className="flex justify-between">
-                          <div>
-                            <h3 className="font-medium">{edu.degree || "S1 Teknik Informatika"}</h3>
-                            <p className="text-xs text-gray-600">{edu.institution || "Universitas Indonesia"}</p>
-                          </div>
-                          <div className="text-xs text-gray-500">{edu.year || "2018"}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-2">Skills</h2>
-                      <p className="text-xs">
-                        {cvData.skills?.hard || "JavaScript, React, Node.js, Python, SQL, Git, Docker, AWS"}
-                      </p>
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-2">Languages</h2>
-                      <p className="text-xs">
-                        {cvData.languages || "Bahasa Indonesia (Native), English (Professional)"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                cvData && (
+                  <CVMinimal cvData={cvData} language={language} />
+                )
               )}
             </div>
           </div>
@@ -471,7 +189,7 @@ export function CVPreview() {
   )
 }
 
-function getFallbackData() {
+export function getFallbackData() {
   return {
     personal: {
       name: "John Doe",

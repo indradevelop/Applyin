@@ -13,8 +13,8 @@ export default function PreviewCVPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
-              <h1 className="font-bb-casual text-3xl md:text-4xl mb-4 sm:mb-0">Pratinjau CV Kamu</h1>
-              <div className="flex gap-3">
+              <h1 className="font-reb-casual text-3xl md:text-4xl mb-4 sm:mb-0">Pratinjau CV Kamu</h1>
+              {/* <div className="flex gap-3">
                 <Button asChild variant="outline" size="sm">
                   <Link href="/buat-cv">
                     <ArrowLeft className="h-4 w-4 mr-2" />
@@ -27,7 +27,7 @@ export default function PreviewCVPage() {
                     Download PDF
                   </Link>
                 </Button>
-              </div>
+              </div> */}
             </div>
 
             <CVPreview />

@@ -29,7 +29,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <div className="relative">
-                <h1 className="font-bb-casual text-4xl md:text-5xl lg:text-6xl leading-tight">
+                <h1 className="font-reb-casual text-4xl md:text-5xl lg:text-6xl leading-tight">
                   <HeroText delay={0.1}>
                     <span className="inline-block">
                       Buat{" "}
@@ -147,7 +147,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <TextReveal>
-              <h2 className="font-bb-casual text-3xl md:text-4xl mb-4">
+              <h2 className="font-reb-casual text-3xl md:text-4xl mb-4">
                 <GradientText>Mengapa CV dari Kami Lebih Unggul?</GradientText>
               </h2>
             </TextReveal>
@@ -204,7 +204,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <TextReveal>
-              <h2 className="font-bb-casual text-3xl md:text-4xl mb-4">
+              <h2 className="font-reb-casual text-3xl md:text-4xl mb-4">
                 <GradientText from="from-primary" to="to-purple-500">
                   Hanya 3 Langkah untuk Buat CV ATS-Friendly
                 </GradientText>
@@ -257,7 +257,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <TextReveal>
-              <h2 className="font-bb-casual text-3xl md:text-4xl mb-4">
+              <h2 className="font-reb-casual text-3xl md:text-4xl mb-4">
                 <GradientText from="from-primary" to="to-blue-400">
                   Apa Kata Mereka yang Sudah Menggunakannya?
                 </GradientText>
@@ -319,7 +319,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <ScrollReveal>
             <Card3D className="premium-card p-8 md:p-12 text-center max-w-4xl mx-auto glow-effect">
-              <h2 className="font-bb-casual text-3xl md:text-4xl mb-4">
+              <h2 className="font-reb-casual text-3xl md:text-4xl mb-4">
                 <GradientText from="from-primary" to="to-purple-500">
                   Siap Lolos Screening CV?
                 </GradientText>
